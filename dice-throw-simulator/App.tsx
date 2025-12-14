@@ -17,10 +17,36 @@ const App: React.FC = () => {
   const settingsPanelRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Responsive camera position
+  const [cameraPosition, setCameraPosition] = useState<
+    [number, number, number]
+  >([0, 20, 15]);
+  const [cameraFov, setCameraFov] = useState<number>(50);
+
   // Initialize results array
   useEffect(() => {
     setResults(new Array(diceCount).fill(null));
   }, [diceCount]);
+
+  // Adjust camera for mobile/desktop
+  useEffect(() => {
+    const updateCamera = () => {
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        // More zoomed out for mobile
+        setCameraPosition([0, 28, 20]);
+        setCameraFov(60);
+      } else {
+        // Desktop view
+        setCameraPosition([0, 20, 15]);
+        setCameraFov(50);
+      }
+    };
+
+    updateCamera();
+    window.addEventListener("resize", updateCamera);
+    return () => window.removeEventListener("resize", updateCamera);
+  }, []);
 
   // Reset results when throw starts
   useEffect(() => {
@@ -105,7 +131,7 @@ const App: React.FC = () => {
     <div className="w-full h-full relative bg-zinc-900 select-none overflow-hidden touch-none">
       {/* 3D Canvas */}
       <div className="absolute inset-0 z-0">
-        <Canvas shadows camera={{ position: [0, 20, 15], fov: 50 }}>
+        <Canvas shadows camera={{ position: cameraPosition, fov: cameraFov }}>
           <color attach="background" args={["#27272a"]} />
           <GameScene
             diceCount={diceCount}
