@@ -1,0 +1,5 @@
+{
+  "name": "Dice Throw Simulator",
+  "description": "A 3D physics-based dice throwing simulator with shake mechanics and customizable dice count.",
+  "requestFramePermissions": []
+}
