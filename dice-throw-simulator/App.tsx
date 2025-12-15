@@ -42,8 +42,8 @@ const App: React.FC = () => {
 
   // Initialize audio
   useEffect(() => {
-    shakingSoundRef.current = new Audio("public/shaking.mp3");
-    droppingSoundRef.current = new Audio("public/dropping.mp3");
+    shakingSoundRef.current = new Audio("shaking.mp3");
+    droppingSoundRef.current = new Audio("dropping.mp3");
 
     // Set loop for shaking sound
     if (shakingSoundRef.current) {
