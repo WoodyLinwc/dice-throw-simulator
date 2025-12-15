@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Dices, MousePointerClick, Settings, RotateCcw } from "lucide-react";
+import {
+  Dices,
+  MousePointerClick,
+  Settings,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import GameScene from "./components/GameScene";
 
 const App: React.FC = () => {
@@ -23,10 +30,38 @@ const App: React.FC = () => {
   >([0, 20, 15]);
   const [cameraFov, setCameraFov] = useState<number>(50);
 
+  // Sound effects
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const shakingSoundRef = useRef<HTMLAudioElement | null>(null);
+  const droppingSoundRef = useRef<HTMLAudioElement | null>(null);
+
   // Initialize results array
   useEffect(() => {
     setResults(new Array(diceCount).fill(null));
   }, [diceCount]);
+
+  // Initialize audio
+  useEffect(() => {
+    shakingSoundRef.current = new Audio("./shaking.mp3");
+    droppingSoundRef.current = new Audio("./dropping.mp3");
+
+    // Set loop for shaking sound
+    if (shakingSoundRef.current) {
+      shakingSoundRef.current.loop = true;
+    }
+
+    return () => {
+      // Cleanup
+      if (shakingSoundRef.current) {
+        shakingSoundRef.current.pause();
+        shakingSoundRef.current = null;
+      }
+      if (droppingSoundRef.current) {
+        droppingSoundRef.current.pause();
+        droppingSoundRef.current = null;
+      }
+    };
+  }, []);
 
   // Adjust camera for mobile/desktop
   useEffect(() => {
@@ -98,6 +133,14 @@ const App: React.FC = () => {
     setIsShaking(true);
     setResults(new Array(diceCount).fill(null)); // Clear results on shake
 
+    // Play shaking sound
+    if (!isMuted && shakingSoundRef.current) {
+      shakingSoundRef.current.currentTime = 0;
+      shakingSoundRef.current
+        .play()
+        .catch((err) => console.log("Audio play failed:", err));
+    }
+
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
 
     longPressTimer.current = setTimeout(() => {
@@ -111,8 +154,22 @@ const App: React.FC = () => {
       longPressTimer.current = null;
     }
 
+    // Stop shaking sound
+    if (shakingSoundRef.current) {
+      shakingSoundRef.current.pause();
+      shakingSoundRef.current.currentTime = 0;
+    }
+
     // Stop shaking
     setIsShaking(false);
+
+    // Play dropping sound
+    if (!isMuted && droppingSoundRef.current) {
+      droppingSoundRef.current.currentTime = 0;
+      droppingSoundRef.current
+        .play()
+        .catch((err) => console.log("Audio play failed:", err));
+    }
 
     // Trigger the throw
     setThrowTrigger((prev) => prev + 1);
@@ -122,6 +179,12 @@ const App: React.FC = () => {
     if (isShaking) {
       setIsShaking(false);
       if (longPressTimer.current) clearTimeout(longPressTimer.current);
+
+      // Stop shaking sound
+      if (shakingSoundRef.current) {
+        shakingSoundRef.current.pause();
+        shakingSoundRef.current.currentTime = 0;
+      }
     }
   };
 
@@ -238,7 +301,21 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-zinc-700">
+          <div className="mb-4">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm text-zinc-200 transition-colors flex items-center justify-center gap-2 active:scale-95 transform"
+            >
+              {isMuted ? (
+                <VolumeX className="w-4 h-4" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+              {isMuted ? "Unmute Sound" : "Mute Sound"}
+            </button>
+          </div>
+
+          <div className="pt-4 border-t border-zinc-700">
             <button
               onClick={() => setResetTrigger((prev) => prev + 1)}
               className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm text-zinc-200 transition-colors flex items-center justify-center gap-2 active:scale-95 transform"
